@@ -32,7 +32,7 @@ function neonStatement(table:string,method:string,params:string,payload:unknown)
  if(!cols)throw Error('Jadual Neon tidak dibenarkan');
  const qs=new URLSearchParams(params), values:unknown[]=[];
  const args:string[]=[];
- const bind=(v:unknown)=>{values.push(v);return '
+const bind=(v:unknown)=>{values.push(v);return String.fromCharCode(36)+values.length};
  const ident=(col:string)=>{if(!cols.has(col))throw Error('Kolum tidak sah: '+col);return '"'+col+'"'};
  if(method==='GET'||method==='DELETE'){
   const fields=method==='DELETE'?['*']:(qs.get('select')||'*').split(',').map(x=>x.trim());

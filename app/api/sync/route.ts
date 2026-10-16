@@ -56,9 +56,9 @@ export async function GET(request:NextRequest){
   }
   // Preserve history and assessment references while removing outdated current-class membership.
   const enrollmentIds=enrollments.map(e=>String(e.id));
-  await db.query('UPDATE public.student_enrolments SET is_current=false WHERE is_current=true AND NOT (id=ANY($1::uuid[]))',[enrollmentIds]);
+  await db.query('UPDATE public.student_enrolments e SET is_current=false WHERE is_current=true AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text($1::jsonb) a(id) WHERE a.id::uuid=e.id)',[JSON.stringify(enrollmentIds)]);
   const teacherIds=data.teachers.map(t=>String(t.id));
-  await db.query('UPDATE public.teachers SET active=false WHERE NOT (id=ANY($1::uuid[]))',[teacherIds]);
+  await db.query('UPDATE public.teachers t SET active=false WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text($1::jsonb) a(id) WHERE a.id::uuid=t.id)',[JSON.stringify(teacherIds)]);
   await db.query("INSERT INTO public.pbd_sync_metadata(id,last_sync,note) VALUES(1,now(),$1) ON CONFLICT(id) DO UPDATE SET last_sync=EXCLUDED.last_sync,note=EXCLUDED.note",[JSON.stringify(count)]);
   return NextResponse.json({ok:true,updated:count,at:new Date().toISOString()});
  }catch(error){console.error('PBD Neon sync failed',error);return NextResponse.json({ok:false,error:'Sync failed; no data removed'},{status:503})}

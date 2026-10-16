@@ -2,6 +2,8 @@ import { createHmac,createHash,timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 const url=process.env.SUPABASE_URL?.replace(/\/$/,'');
 const key=process.env.SUPABASE_SECRET_KEY;
+const pbdUrl=process.env.PBD_SUPABASE_URL?.replace(/\/$/,'');
+const pbdKey=process.env.PBD_SUPABASE_SECRET_KEY;
 const secret=process.env.SESSION_SECRET;
 // Portal Kokurikulum: akses baca sahaja. Rekod baru hanya dalam jadual pbd_*.
 const legacyReadOnly=new Set(['teachers','students','academic_sessions','classes','student_enrolments']);
@@ -9,8 +11,11 @@ const pbdTables=new Set(['pbd_subjects','pbd_teacher_access','pbd_assignments','
 export function configuration(){
  const missing:string[]=[];
  if(!url)missing.push('SUPABASE_URL');
- if(!key||key==='YOUR_SUPABASE_SECRET_KEY')missing.push('SUPABASE_SECRET_KEY');
- if(!secret||secret.length<32||secret==='GENERATE_A_RANDOM_64_CHARACTER_SECRET')missing.push('SESSION_SECRET');
+ if(!key||key.startsWith('YOUR_')||key.startsWith('ISI_'))missing.push('SUPABASE_SECRET_KEY');
+ if(!pbdUrl||pbdUrl==='YOUR_PBD_SUPABASE_URL')missing.push('PBD_SUPABASE_URL');
+ if(!pbdKey||pbdKey.startsWith('YOUR_')||pbdKey.startsWith('ISI_'))missing.push('PBD_SUPABASE_SECRET_KEY');
+ if(!secret||secret.length<32||secret.startsWith('YOUR_')||secret.startsWith('ISI_')||secret==='GENERATE_A_RANDOM_64_CHARACTER_SECRET')missing.push('SESSION_SECRET');
+ if(url&&pbdUrl&&url===pbdUrl)missing.push('PBD_SUPABASE_URL mesti projek berlainan daripada Portal Koku');
  return {ready:missing.length===0,missing};
 }
 export async function db(table:string,method='GET',params='',payload?:unknown){
@@ -19,12 +24,14 @@ export async function db(table:string,method='GET',params='',payload?:unknown){
  if(!legacyReadOnly.has(table)&&!pbdTables.has(table))throw new Error('Akses jadual tidak dibenarkan');
  if(legacyReadOnly.has(table)&&method!=='GET')throw new Error('Portal Koku hanya boleh dibaca, bukan diubah');
  // Supabase sb_secret_ bukan JWT. Jangan hantar sebagai Bearer.
- const headers:Record<string,string>={'apikey':key!,'Content-Type':'application/json','Prefer':method==='POST'&&params.includes('on_conflict')?'resolution=merge-duplicates,return=representation':'return=representation'};
- if(!key!.startsWith('sb_secret_'))headers.Authorization=`Bearer ${key}`;
- const res=await fetch(`${url}/rest/v1/${table}${params?`?${params}`:''}`,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:'no-store'});
+ const isSource=legacyReadOnly.has(table);
+ const base=isSource?url!:pbdUrl!,apiKey=isSource?key!:pbdKey!;
+ const headers:Record<string,string>={'apikey':apiKey,'Content-Type':'application/json','Prefer':method==='POST'&&params.includes('on_conflict')?'resolution=merge-duplicates,return=representation':'return=representation'};
+ if(!apiKey.startsWith('sb_secret_'))headers.Authorization=`Bearer ${apiKey}`;
+ const res=await fetch(`${base}/rest/v1/${table}${params?`?${params}`:''}`,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:'no-store'});
  const bodyText=await res.text();
  if(!res.ok){
-  if(res.status===401||res.status===403)throw new Error('Sambungan Supabase ditolak ('+res.status+'). Semak SUPABASE_SECRET_KEY di Vercel dan deploy semula.');
+  if(res.status===401||res.status===403)throw new Error('Sambungan Supabase ditolak ('+res.status+'). Semak kunci server '+(isSource?'SUPABASE_SECRET_KEY':'PBD_SUPABASE_SECRET_KEY')+' dalam Vercel.');
   throw new Error('Ralat pangkalan data ('+res.status+'). Semak sambungan di Vercel.');
  }
  try{return bodyText?JSON.parse(bodyText):[]}catch{throw new Error('Supabase tidak memulangkan data JSON yang sah')}

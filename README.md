@@ -39,3 +39,14 @@ A 82–100; B 66–81; C 50–65; D 35–49; E 20–34; F 0–19 (aplikasi turut
 ## Local
 
 `npm install` kemudian `npm run dev`. Semua secret hanya di pelayan. Uji dengan data tanpa murid sebenar pada persekitaran staging sebelum guna di sekolah.
+
+
+## PENTING: PISAHKAN DATA KOKU DAN PBD (Oktober 2026)
+
+Kod terkini **tidak menulis PBD/UASA dalam pangkalan data Koku**. Projek asal **Perjumpaan Kokurikulum SKSA** dibaca bagi guru, murid, kelas, sesi dan enrolmen sahaja. Operasi tulis untuk jadual tersebut dihalang dalam backend.
+
+Sediakan **projek Supabase baharu khusus PBD-UASA SKSA**, lalu jalankan `migrations/001_pbd_separate_project.sql` **HANYA di projek baharu**. Skema itu menyimpan UUID rujukan kelas/murid/guru dari sumber Koku tanpa FK silang database.
+
+Vercel Production kini memerlukan 5 Environment Variables (lihat `.env.example`): `SUPABASE_URL`, `SUPABASE_SECRET_KEY` untuk baca sumber; `PBD_SUPABASE_URL`, `PBD_SUPABASE_SECRET_KEY` untuk simpanan PBD; dan `SESSION_SECRET`. Gunakan nilai server-only. Jika sumber dan destinasi URL sama, aplikasi sengaja tidak beroperasi bagi mengelakkan penulisan ke Koku. Jangan deploy untuk kegunaan sebenar sebelum konfigurasi diuji.
+
+Semak `/api/health` selepas redeploy. Endpoint memaklumkan pembolehubah yang tiada tanpa mendedahkan nilai key. Log masuk IC sahaja tidak cukup kuat untuk perlindungan rekod murid; pertimbangkan pengesahan tambahan sebelum penggunaan sebenar.

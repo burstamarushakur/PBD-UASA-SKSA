@@ -61,7 +61,7 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string
   if(!cfg.ready)return Response.json({ok:false,missing:cfg.missing,message:'Environment Variables Vercel belum lengkap.'},{status:503});
   try{
    await Promise.all([db('teachers','GET','select=id&limit=1'),db('pbd_subjects','GET','select=id&limit=1')]);
-   return Response.json({ok:true,missing:[],message:'Sambungan Supabase dan jadual PBD berjaya.'});
+   return Response.json({ok:true,missing:[],message:'Sambungan baca Portal Koku dan pangkalan data PBD berasingan berjaya.'});
   }catch(e){
    console.error('Health check failed:',e);
    return Response.json({ok:false,missing:[],message:e instanceof Error?e.message:'Ralat sambungan Supabase'},{status:503});

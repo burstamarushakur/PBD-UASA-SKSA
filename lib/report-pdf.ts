@@ -90,21 +90,30 @@ export async function makeReportPdf(data:ReportBundle):Promise<Uint8Array>{
  }
  text(second,'PERBANDINGAN KELAS',38,y,11,NAVY,true);y-=22;
  const tableX=38,tw=766,rowH=19;
- second.drawRectangle({x:tableX,y:y-3,width:tw,height:22,color:LIGHT,borderColor:BORDER,borderWidth:.5});
- text(second,'Kelas',47,y+4,9,NAVY,true);
- text(second,'Murid',376,y+4,9,NAVY,true);
- text(second,'Lengkap',464,y+4,9,NAVY,true);
- text(second,'Kadar',559,y+4,9,NAVY,true);
- text(second,data.meta.type==='pbd'?'Purata TP':'Purata Markah',667,y+4,9,NAVY,true);
- y-=rowH+3;
+ let comparePage=second;
+ const classHeader=()=>{
+  comparePage.drawRectangle({x:tableX,y:y-3,width:tw,height:22,color:LIGHT,borderColor:BORDER,borderWidth:.5});
+  text(comparePage,'Kelas',47,y+4,9,NAVY,true);
+  text(comparePage,'Murid',376,y+4,9,NAVY,true);
+  text(comparePage,'Lengkap',464,y+4,9,NAVY,true);
+  text(comparePage,'Kadar',559,y+4,9,NAVY,true);
+  text(comparePage,data.meta.type==='pbd'?'Purata TP':'Purata Markah',667,y+4,9,NAVY,true);
+  y-=rowH+3;
+ };
+ classHeader();
  for(const c of data.perClass){
-  if(y<72)break;
-  second.drawRectangle({x:tableX,y:y-5,width:tw,height:rowH,color:WHITE,borderColor:BORDER,borderWidth:.4});
-  text(second,c.name,47,y+1,8,NAVY,false,302);
-  text(second,c.summary.total,380,y+1,9,GREY);
-  text(second,c.summary.complete,476,y+1,9,GREY);
-  text(second,c.summary.completion.toFixed(1)+'%',558,y+1,9,GREY);
-  text(second,fmt(data.meta.type==='pbd'?c.summary.meanTp:c.summary.meanScore),688,y+1,9,GREY);
+  if(y<72){
+   comparePage=addPage();base(comparePage,'Sambungan perbandingan kelas');
+   y=HEIGHT-110;
+   text(comparePage,'PERBANDINGAN KELAS (SAMBUNGAN)',38,HEIGHT-92,12,NAVY,true);
+   classHeader();
+  }
+  comparePage.drawRectangle({x:tableX,y:y-5,width:tw,height:rowH,color:WHITE,borderColor:BORDER,borderWidth:.4});
+  text(comparePage,c.name,47,y+1,8,NAVY,false,302);
+  text(comparePage,c.summary.total,380,y+1,9,GREY);
+  text(comparePage,c.summary.complete,476,y+1,9,GREY);
+  text(comparePage,c.summary.completion.toFixed(1)+'%',558,y+1,9,GREY);
+  text(comparePage,fmt(data.meta.type==='pbd'?c.summary.meanTp:c.summary.meanScore),688,y+1,9,GREY);
   y-=rowH;
  }
  // 3. Full printable student list with strict row borders and page breaks.

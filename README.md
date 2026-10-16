@@ -9,6 +9,11 @@ Aplikasi Next.js berasaskan pangkalan data asal **Perjumpaan Kokurikulum SKSA**,
 - Pengisian PBD membenarkan TP keseluruhan dan TP kemahiran bagi subjek yang ada dimensi kemahiran. UASA membenarkan markah 0–100 dan gred automatik.
 - Ini **bukan** penyelarasan/penyerahan rasmi IDMe. Extension Chrome dan pemetaan JSON asal Bahasa Inggeris masih memerlukan data sumber yang tepat.
 
+## Pembaikan login (Oktober 2026)
+Buka `https://DOMAIN-VERCEL-ANDA/api/health`. Jika tidak sedia, endpoint ini akan menyatakan tetapan yang belum lengkap tanpa memaparkan rahsia. Buka Vercel > Project > Settings > Environment Variables dan masukkan `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (server-only, `sb_secret_...`) dan `SESSION_SECRET` (random minimum 32 aksara). Pilih Production dan **Redeploy**. Jangan kongsi API key atau commit ke GitHub.
+
+Kod API menghalang operasi tulis pada semua jadual Koku asal (teachers/students/classes/sessions/enrolments) dan hanya boleh menulis kepada jadual berawalan `pbd_*`.
+
 ## Deploy ke Vercel
 
 1. Cipta repository GitHub **baharu**, muat naik fail dalam ZIP ini (bukan ke repo Portal Koku).

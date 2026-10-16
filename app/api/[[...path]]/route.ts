@@ -1,5 +1,5 @@
 import { NextRequest,NextResponse } from 'next/server';
-import { db,icHash,newToken,getTeacher,assigned,errorJSON,grade } from '../../../lib/server';
+import { db,icHash,newToken,getTeacher,assigned,errorJSON,grade,configuration } from '../../../lib/server';
 const digits=(v:unknown)=>String(v||'').replace(/\D/g,'');
 function safeYear(y:unknown){const v=Number(y);if(!Number.isInteger(v)||v<2020||v>2100)throw new Error('Tahun tidak sah');return v}
 const uuid=(x:unknown)=>typeof x==='string'&&/^[a-f0-9-]{36}$/i.test(x);
@@ -55,7 +55,19 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{path?:strin
  }catch(e){console.error(e);return errorJSON(e instanceof Error?e.message:'Ralat dalaman',500)}
 }
 export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string[]}>}){
- const t=await getTeacher();if(!t)return errorJSON('Sila log masuk',401);const action=(await params).path?.[0]||'';
+ const action=(await params).path?.[0]||'';
+ if(action==='health'){
+  const cfg=configuration();
+  if(!cfg.ready)return Response.json({ok:false,missing:cfg.missing,message:'Environment Variables Vercel belum lengkap.'},{status:503});
+  try{
+   await Promise.all([db('teachers','GET','select=id&limit=1'),db('pbd_subjects','GET','select=id&limit=1')]);
+   return Response.json({ok:true,missing:[],message:'Sambungan Supabase dan jadual PBD berjaya.'});
+  }catch(e){
+   console.error('Health check failed:',e);
+   return Response.json({ok:false,missing:[],message:e instanceof Error?e.message:'Ralat sambungan Supabase'},{status:503});
+  }
+ }
+ const t=await getTeacher();if(!t)return errorJSON('Sila log masuk',401);
  try{
   if(action==='me')return Response.json({teacher:t});
   const year=safeYear(req.nextUrl.searchParams.get('year')||'2026');

@@ -10,15 +10,17 @@ const legacyReadOnly=new Set(['teachers','students','academic_sessions','classes
 const pbdTables=new Set(['pbd_subjects','pbd_teacher_access','pbd_assignments','pbd_records','pbd_login_attempts']);
 export function configuration(){
  const missing:string[]=[];
- if(!url)missing.push('SUPABASE_URL');
- if(!key||key.startsWith('YOUR_')||key.startsWith('ISI_'))missing.push('SUPABASE_SECRET_KEY');
- if(!neonUrl||!/^postgres(ql)?:\/\//.test(neonUrl))missing.push('PBD_DATABASE_URL');
- if(!secret||secret.length<32||secret.startsWith('YOUR_')||secret.startsWith('ISI_')||secret==='GENERATE_A_RANDOM_64_CHARACTER_SECRET')missing.push('SESSION_SECRET');
- 
+ if(!neonUrl||!neonUrl.startsWith('postgres'))missing.push('PBD_DATABASE_URL');
+ if(!secret||secret.length<32)missing.push('SESSION_SECRET');
  return {ready:missing.length===0,missing};
 }
 
 const tableColumns:Record<string,Set<string>>={
+ teachers:new Set(['id','full_name','active','identification_hash']),
+ students:new Set(['id','full_name','active']),
+ academic_sessions:new Set(['id','year','name']),
+ classes:new Set(['id','name','year_level','session_id']),
+ student_enrolments:new Set(['id','student_id','session_id','class_id','is_current']),
  pbd_subjects:new Set(['id','name','short_name','min_year','max_year','skills','is_elective','active','sort_order']),
  pbd_teacher_access:new Set(['teacher_id','role','enabled','created_at']),
  pbd_assignments:new Set(['id','teacher_id','class_id','subject_id','academic_year','created_at']),
@@ -33,14 +35,21 @@ function neonStatement(table:string,method:string,params:string,payload:unknown)
  const binds=(v:unknown)=>{values.push(v);return '$'+values.length};
  const ident=(col:string)=>{if(!cols.has(col))throw Error('Kolum tidak sah: '+col);return '"'+col+'"'};
  if(method==='GET'||method==='DELETE'){
-  const fields=method==='DELETE'?'*':(qs.get('select')||'*').split(',').map(x=>x.trim());
+  const fields=method==='DELETE'?['*']:(qs.get('select')||'*').split(',').map(x=>x.trim());
   const projection=fields.length===1&&fields[0]==='*'?'*':fields.map(ident).join(', ');
   for(const [key,raw] of qs.entries()){
    if(['select','order','limit','offset'].includes(key))continue;
    const dot=raw.indexOf('.');const op=raw.slice(0,dot),value=raw.slice(dot+1);
-   if(dot<0||!['eq','gte','lte','gt','lt','neq'].includes(op))throw Error('Penapis query tidak sah');
-   const sign:Record<string,string>={eq:'=',gte:'>=',lte:'<=',gt:'>',lt:'<',neq:'<>'};
-   args.push(ident(key)+' '+sign[op]+' '+bind(value));
+   if(dot<0||!['eq','gte','lte','gt','lt','neq','in'].includes(op))throw Error('Penapis query tidak sah');
+   if(op==='in'){
+    if(!value.startsWith('(')||!value.endsWith(')'))throw Error('Senarai ID tidak sah');
+    const ids=value.slice(1,-1).split(',').filter(Boolean);
+    if(!ids.length||ids.length>1000)throw Error('Senarai ID tidak sah');
+    args.push(ident(key)+' IN ('+ids.map(bind).join(',')+')');
+   }else{
+    const sign:Record<string,string>={eq:'=',gte:'>=',lte:'<=',gt:'>',lt:'<',neq:'<>'};
+    args.push(ident(key)+' '+sign[op]+' '+bind(value));
+   }
   }
   const where=args.length?' WHERE '+args.join(' AND '):'';
   if(method==='DELETE')return {sql:'DELETE FROM public."'+table+'"'+where+' RETURNING *',values};
@@ -67,16 +76,8 @@ function neonStatement(table:string,method:string,params:string,payload:unknown)
 export async function db(table:string,method='GET',params='',payload?:unknown){
  const cfg=configuration();
  if(!cfg.ready)throw new Error('Tetapan pelayan belum lengkap: '+cfg.missing.join(', '));
- if(legacyReadOnly.has(table)){
-  if(method!=='GET')throw Error('Jadual Portal Koku adalah baca sahaja');
-  const apiKey=key!;
-  const headers:Record<string,string>={'apikey':apiKey,'Content-Type':'application/json'};
-  if(!apiKey.startsWith('sb_secret_'))headers.Authorization='Bearer '+apiKey;
-  const res=await fetch(url+'/rest/v1/'+table+(params?'?'+params:''),{method:'GET',headers,cache:'no-store'});
-  if(!res.ok)throw Error('Bacaan Portal Koku gagal ('+res.status+'). Periksa konfigurasi dan kunci.');
-  return res.json();
- }
- if(!pbdTables.has(table))throw Error('Jadual tidak dibenarkan');
+ if(legacyReadOnly.has(table)&&method!=='GET')throw Error('Data asal Koku dalam Neon hanya boleh dibaca');
+ if(!legacyReadOnly.has(table)&&!pbdTables.has(table))throw Error('Jadual tidak dibenarkan');
  const query=neonStatement(table,method,params,payload);
  const sql=neon(neonUrl!);
  return await sql.query(query.sql,query.values as any[]);

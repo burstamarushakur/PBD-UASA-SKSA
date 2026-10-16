@@ -61,7 +61,7 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string
   if(!cfg.ready)return Response.json({ok:false,missing:cfg.missing,message:'Environment Variables Vercel belum lengkap.'},{status:503});
   try{
    await Promise.all([db('teachers','GET','select=id&limit=1'),db('pbd_subjects','GET','select=id&limit=1')]);
-   return Response.json({ok:true,missing:[],message:'Sambungan baca Portal Koku dan pangkalan data PBD berasingan berjaya.'});
+   return Response.json({ok:true,missing:[],message:'Neon berfungsi untuk murid, kelas, guru dan PBD/UASA.'});
   }catch(e){
    console.error('Health check failed:',e);
    return Response.json({ok:false,missing:[],message:e instanceof Error?e.message:'Ralat sambungan Supabase'},{status:503});
@@ -84,8 +84,10 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string
    if(!await assigned(t,year,cid,subject))return errorJSON('Tidak dibenarkan',403);
    const c=await db('classes','GET',`select=id,session_id,year_level&id=eq.${cid}&limit=1`);if(!c.length||c[0].session_id!==sid)return errorJSON('Kelas tidak wujud');
    const sub=await db('pbd_subjects','GET',`select=id,min_year,max_year&id=eq.${encodeURIComponent(subject)}&limit=1`);if(!sub.length||c[0].year_level<sub[0].min_year||c[0].year_level>sub[0].max_year)return errorJSON('Subjek tidak berkaitan');
-   const [enroll,records]=await Promise.all([db('student_enrolments','GET',`select=student_id,students(id,full_name)&class_id=eq.${cid}&session_id=eq.${sid}&is_current=eq.true`),db('pbd_records','GET',`select=*&class_id=eq.${cid}&subject_id=eq.${encodeURIComponent(subject)}&academic_year=eq.${year}`)]);
-   return Response.json({students:enroll.map((e:any)=>e.students).filter(Boolean).sort((a:any,b:any)=>a.full_name.localeCompare(b.full_name)),records});
+   const [enroll,records]=await Promise.all([db('student_enrolments','GET',`select=student_id&class_id=eq.${cid}&session_id=eq.${sid}&is_current=eq.true`),db('pbd_records','GET',`select=*&class_id=eq.${cid}&subject_id=eq.${encodeURIComponent(subject)}&academic_year=eq.${year}`)]);
+   const ids=enroll.map((e:any)=>e.student_id).filter((x:any)=>uuid(x));
+   const pupils=ids.length?await db('students','GET',`select=id,full_name&id=in.(${ids.join(',')})`):[];
+   return Response.json({students:pupils.sort((a:any,b:any)=>a.full_name.localeCompare(b.full_name)),records});
   }
   return errorJSON('Endpoint tidak wujud',404);
  }catch(e){console.error(e);return errorJSON(e instanceof Error?e.message:'Ralat dalaman',500)}

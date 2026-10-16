@@ -131,3 +131,66 @@
 @media(max-width:1080px){.inlineSkills,.inlineDetails{grid-template-columns:1fr}}
 @media(max-width:650px){.inlineQuick{display:block}.inlineQuickButtons{margin-top:10px;width:100%}.inlineToolbar{align-items:flex-start;flex-direction:column}.inlinePupilBody{padding:10px}.inlinePupilHead{padding:10px}.inlinePupilFooter{padding:10px}.inlineSkill{padding:10px 8px}.inlineChoices{gap:4px}.inlineNumber{height:36px}.inlineBottomBar{bottom:0;flex-wrap:wrap}.inlineBottomBar button{margin-left:auto}.inlineBottomBar span{font-size:11px}}
 @media(max-width:340px){.inlinePill{font-size:9px;padding:8px 7px}.inlineChoices{gap:3px}.inlineNumber{font-size:12px}}
+
+
+/* Analisis PBD/UASA serta PDF, layout ringkas dan responsif */
+.reportIntro{background:linear-gradient(145deg,#fff,#f8fbff)}
+.reportIntroTop{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.reportIntroTop h2{margin:6px 0 7px;font-size:23px;color:#1c385e}
+.reportIntroTop p,.reportPrivacy,.reportSkillPanel p,.reportAttention p{font-size:12px;color:#71849b;line-height:1.65;margin:0}
+.reportRole{font-size:10px;letter-spacing:.4px;color:#276092;background:#e5f1ff;padding:9px 11px;border-radius:30px;font-weight:800;white-space:nowrap}
+.reportFilterGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.reportFilterGrid label{display:block;font-size:11px;color:#526c87;font-weight:750;margin-bottom:7px}
+.reportFilterGrid select{width:100%;min-width:0;padding:11px 10px;border:1px solid #d5e0eb;border-radius:9px;background:#fff;color:#233952}
+.reportActions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:20px 0 13px}
+.reportActions button,.reportDownload{display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:10px 16px;border-radius:9px;font-size:12px;font-weight:800;text-decoration:none}
+.reportDownload{background:#17876c;color:white;border:1px solid #17876c}
+.reportDownload:hover{background:#0f6f57}
+.reportDisabled{font-size:12px;color:#8493a2}
+.reportError{font-size:12px;color:#a83346;background:#fff0f3;border-radius:8px;padding:12px}
+.reportMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.reportMetrics>div{min-width:0;border:1px solid #e0e8f2;background:#fff;border-radius:13px;padding:18px 16px;box-shadow:0 4px 16px #16355b09}
+.reportMetrics small{display:block;color:#6f7f91;font-size:11px;line-height:1.4}
+.reportMetrics strong{display:block;color:#183f74;font-size:26px;margin-top:8px}
+.reportGraphs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.reportChart{min-width:0;background:#fff;border:1px solid #e0e8f2;border-radius:14px;padding:19px;box-shadow:0 3px 15px #2245670a}
+.reportChart h3{font-size:15px;margin:0 0 20px;color:#244667}
+.reportChart>small{display:block;font-size:10px;color:#8697a6;margin-top:15px}
+.reportVerticalBars{height:190px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.reportVColumn{display:flex;flex-direction:column;align-items:center;min-width:0;gap:6px}
+.reportVColumn strong{font-size:12px;color:#2c4d72}
+.reportVColumn span{font-size:11px;color:#677990;white-space:nowrap}
+.reportVBarTrack{flex:1;min-height:35px;width:100%;display:flex;align-items:flex-end;background:#f1f5fa;border-radius:7px 7px 0 0;overflow:hidden}
+.reportVBar{width:100%;min-height:0;border-radius:6px 6px 0 0;transition:height .3s}
+.reportDonutRow{display:flex;align-items:center;justify-content:space-evenly;gap:18px;min-height:190px}
+.reportDonut{height:158px;width:158px;flex-shrink:0;border-radius:50%;display:grid;place-items:center}
+.reportDonut>div{display:grid;align-content:center;justify-items:center;background:white;height:116px;width:116px;border-radius:50%}
+.reportDonut strong{font-size:23px;color:#1d466d}
+.reportDonut small{font-size:11px;color:#7890a5}
+.reportDonutLegend{display:grid;gap:11px;min-width:135px}
+.reportDonutLegend div{display:flex;align-items:center;gap:7px;font-size:11px;color:#53667e}
+.reportDonutLegend i,.reportLegend i{height:10px;width:10px;border-radius:3px;display:inline-block;flex-shrink:0}
+.reportDonutLegend b{margin-left:auto;color:#244567}
+.reportSkillPanel,.reportCompare,.reportAttention{margin-bottom:17px}
+.reportSkillPanel h2,.reportCompare h2,.reportAttention h2{margin:0 0 8px;font-size:17px;color:#223f5c}
+.reportLegend{display:flex;gap:13px;flex-wrap:wrap;margin:18px 0;font-size:10px;color:#6c7c8c}
+.reportLegend span{display:flex;align-items:center;gap:5px}
+.reportSkillRow{display:grid;grid-template-columns:minmax(130px,210px) minmax(0,1fr) 95px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f3f7}
+.reportSkillRow strong{font-size:12px;color:#264b73}
+.reportSkillRow small{text-align:right;font-size:10px;color:#6b7e90}
+.reportSkillTrack{height:19px;border-radius:6px;overflow:hidden;display:flex;background:#eff3f8}
+.reportSkillTrack>div{height:100%;min-width:0}
+.reportCompareList{display:grid;gap:0;margin-top:15px}
+.reportCompareRow{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr) 68px 118px;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid #edf2f7}
+.reportCompareRow>span{font-size:11px;font-weight:700;color:#2b5279}
+.reportCompareRow>div{height:13px;border-radius:8px;background:#edf4fc;overflow:hidden}
+.reportCompareRow>div>div{height:100%;background:#5599d7;border-radius:8px}
+.reportCompareRow b{font-size:11px;color:#224f80}
+.reportCompareRow small{font-size:10px;color:#738296;text-align:right}
+.reportAttentionList{margin-top:14px;max-height:360px;overflow:auto}
+.reportAttentionList>div{display:grid;grid-template-columns:120px minmax(0,1fr) 95px;gap:10px;align-items:center;padding:9px;border-bottom:1px solid #edf1f7;font-size:11px}
+.reportAttentionList span{color:#567494}
+.reportAttentionList b{color:#304b67;font-size:11px;overflow-wrap:anywhere}
+.reportAttentionList em{text-align:right;color:#b37429;font-style:normal}
+@media(max-width:1050px){.reportGraphs{grid-template-columns:1fr}.reportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.reportIntroTop{flex-direction:column}.reportFilterGrid{grid-template-columns:1fr}.reportMetrics strong{font-size:22px}.reportMetrics>div{padding:13px}.reportChart{padding:13px}.reportDonutRow{flex-wrap:wrap}.reportSkillRow{grid-template-columns:1fr;gap:7px}.reportSkillRow small{text-align:left}.reportCompareRow{grid-template-columns:minmax(105px,1fr) minmax(65px,1fr) 52px;gap:6px}.reportCompareRow small{grid-column:1/-1;text-align:left}.reportAttentionList>div{grid-template-columns:1fr}.reportAttentionList em{text-align:left}.reportVerticalBars{gap:5px}}

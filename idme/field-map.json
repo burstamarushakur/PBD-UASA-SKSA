@@ -35,9 +35,14 @@
         "neon_field": "skills",
         "idme_column": "Kemahiran",
         "index": 4,
-        "type": "selection",
-        "options_captured": false,
-        "comment": "Menu choices redacted in inspector JSON; validate option labels before extension."
+        "type": "four_skills_tp_1_to_6_or_td",
+        "options_captured": true,
+        "skill_names": [
+          "LISTENING",
+          "SPEAKING",
+          "READING",
+          "WRITING"
+        ]
       },
       {
         "neon_field": "tp",
@@ -57,7 +62,13 @@
         "neon_field": "remarks",
         "idme_column": "Ulasan",
         "index": 6,
-        "type": "text"
+        "type": "single_choice",
+        "options_captured": true,
+        "options": [
+          "CEMERLANG",
+          "SEDERHANA",
+          "LEMAH"
+        ]
       },
       {
         "neon_field": "intervention",
@@ -69,18 +80,58 @@
         "neon_field": "effort",
         "idme_column": "Usaha Murid",
         "index": 8,
-        "type": "selection_or_text",
-        "options_captured": false
+        "type": "single_choice",
+        "options_captured": true,
+        "options": [
+          "SANGAT TINGGI",
+          "TINGGI",
+          "SEDERHANA",
+          "RENDAH"
+        ]
       },
       {
         "neon_field": "status",
         "idme_column": "Status",
         "index": 9,
-        "type": "selection",
-        "options_captured": false
+        "type": "automatic_read_only",
+        "options_captured": true,
+        "comment": "Webapp does not ask user to choose status. IDMe derives it after required data."
       }
     ],
-    "sample_rendered_students": 32
+    "sample_rendered_students": 32,
+    "skills": [
+      "LISTENING",
+      "SPEAKING",
+      "READING",
+      "WRITING"
+    ],
+    "skill_tp_options": [
+      "TP1",
+      "TP2",
+      "TP3",
+      "TP4",
+      "TP5",
+      "TP6",
+      "TD"
+    ],
+    "no_language_arts": true,
+    "quick_entry": {
+      "apply_same_tp_to_all_four": true,
+      "allow_per_skill_override": true,
+      "sets_overall_tp": true
+    },
+    "remarks_options": [
+      "CEMERLANG",
+      "SEDERHANA",
+      "LEMAH"
+    ],
+    "effort_options": [
+      "SANGAT TINGGI",
+      "TINGGI",
+      "SEDERHANA",
+      "RENDAH"
+    ],
+    "status_automatic": true
   },
   "uasa": {
     "applies_to": {
@@ -125,5 +176,5 @@
     ],
     "sample_rendered_students": 25
   },
-  "extension_mapping_notes": "Exact IDMe menu choice texts were removed by inspector privacy mode. Do not invent statuses/skills selection values. Match IDMe student records by idme_student_id in Neon; obtain stable selectors from extension capture before writing into IDMe."
+  "extension_mapping_notes": "BI PBD Year 1-6 has four IDMe skill groups (Listening, Speaking, Reading, Writing), selectable TP1-TP6 or TD. Categorical Ulasan Guru and Usaha Murid choices verified from screenshots (16 October 2026). App derives completion status; IDMe status is managed automatically. Match IDMe pupils using stable IDMe identifiers in Neon when available."
 }

@@ -1,5 +1,6 @@
 import { NextRequest,NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { getTeacher } from '../../../lib/server';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 // Schedule controlled by Vercel Cron. This never writes to Supabase Koku.
@@ -61,4 +62,13 @@ export async function GET(request:NextRequest){
   await db.query("INSERT INTO public.pbd_sync_metadata(id,last_sync,note) VALUES(1,now(),$1) ON CONFLICT(id) DO UPDATE SET last_sync=EXCLUDED.last_sync,note=EXCLUDED.note",[JSON.stringify(count)]);
   return NextResponse.json({ok:true,updated:count,at:new Date().toISOString()});
  }catch(error){console.error('PBD Neon sync failed',error);return NextResponse.json({ok:false,error:'Sync failed; no data removed'},{status:503})}
+}
+
+// Admin may trigger a fresh sync manually. Secret never reaches the browser.
+export async function POST(request:NextRequest){
+ const teacher=await getTeacher();
+ if(!teacher||teacher.role!=='admin')return NextResponse.json({ok:false,error:'Admin sahaja'},{status:403});
+ if(!process.env.CRON_SECRET)return NextResponse.json({ok:false,error:'Konfigurasi sync tiada'},{status:503});
+ const internal=new NextRequest(request.url,{method:'GET',headers:{authorization:'Bearer '+process.env.CRON_SECRET}});
+ return GET(internal);
 }

@@ -1,52 +1,44 @@
-# Portal PBD & UASA SKSA (v1)
+# Portal PBD & UASA SKSA
 
-Aplikasi Next.js berasaskan pangkalan data asal **Perjumpaan Kokurikulum SKSA**, tanpa menukar rekod kokurikulum sedia ada. **JANGAN deploy sehingga semua langkah konfigurasi dan keselamatan disahkan.**
+Sistem PBD Tahun 1–6 dan UASA Tahun 4–6, menggunakan dua projek Supabase **BERASINGAN**.
 
-## Status sebenar
+**PENTING: Jangan jalankan migrasi pada Supabase Portal Kokurikulum SKSA.** Projek itu hanya SUMBER BACA untuk jadual guru, murid, kelas, enrolmen dan sesi. Semua penulisan PBD/UASA dibuat di projek Supabase PBD yang baharu. Kod akan menolak konfigurasi jika kedua-dua URL Supabase sama.
 
-- Jadual `pbd_*` telah dicipta di projek Supabase `sxmchnwzcbsanecxnqdt`; guru admin tunggal awal telah diaktifkan.
-- Sesi 2026 mempunyai 18 kelas Tahun 1–6 dan 558 murid berdaftar. Kelas PPKI (year_level=0) tidak dipaparkan dalam v1.
-- Pengisian PBD membenarkan TP keseluruhan dan TP kemahiran bagi subjek yang ada dimensi kemahiran. UASA membenarkan markah 0–100 dan gred automatik.
-- Ini **bukan** penyelarasan/penyerahan rasmi IDMe. Extension Chrome dan pemetaan JSON asal Bahasa Inggeris masih memerlukan data sumber yang tepat.
+## Status
+- Kod webapp di GitHub: login IC guru, papan kelas & murid, PBD, UASA, agihan admin.
+- Skrip SQL untuk projek PBD baharu: `migrations/001_pbd_separate_project.sql`.
+- Migrasi **belum dijalankan** di projek baharu; jangan gunakan untuk rekod murid sebenar selagi belum disiapkan dan diuji.
+- Jadual `pbd_*` yang pernah dicipta dalam projek Koku **tidak digunakan** dalam kod ini; tiada perubahan/pemadaman pada jadual asal melalui release ini.
+- Login IC sahaja mempunyai risiko penyamaran; langkah pengesahan tambahan disyorkan sebelum penggunaan dengan data sebenar.
 
-## Pembaikan login (Oktober 2026)
-Buka `https://DOMAIN-VERCEL-ANDA/api/health`. Jika tidak sedia, endpoint ini akan menyatakan tetapan yang belum lengkap tanpa memaparkan rahsia. Buka Vercel > Project > Settings > Environment Variables dan masukkan `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (server-only, `sb_secret_...`) dan `SESSION_SECRET` (random minimum 32 aksara). Pilih Production dan **Redeploy**. Jangan kongsi API key atau commit ke GitHub.
+## 1. Persediaan Supabase berasingan
 
-Kod API menghalang operasi tulis pada semua jadual Koku asal (teachers/students/classes/sessions/enrolments) dan hanya boleh menulis kepada jadual berawalan `pbd_*`.
+Cipta projek Supabase `PBD-UASA-SKSA` baharu. Jalankan **hanya pada projek baharu** fail `migrations/001_pbd_separate_project.sql`. Ia menyediakan 17 subjek, akaun admin awal, jadual agihan, rekod dan had percubaan login. UUID guru/murid/kelas dari sumber disimpan sebagai rujukan luaran, bukan foreign key silang projek.
 
-## Deploy ke Vercel
+Data Koku terus dibaca dari projek asal `sxmchnwzcbsanecxnqdt`. Fungsi backend menyekat operasi tulis pada `teachers`, `students`, `classes`, `student_enrolments`, `academic_sessions`.
 
-1. Cipta repository GitHub **baharu**, muat naik fail dalam ZIP ini (bukan ke repo Portal Koku).
-2. Import repo baharu dalam Vercel, framework **Next.js**.
-3. Set Environment Variables berdasarkan `.env.example`.
-   - `SUPABASE_URL`: URL projek Koku (ditunjuk dalam contoh).
-   - `SUPABASE_SECRET_KEY`: secret key **baharu** melalui Supabase → Project Settings → API Keys. **Jangan sekali-kali dedahkan atau commit ke GitHub.**
-   - `SESSION_SECRET`: rentetan rawak sekurang-kurangnya 32 aksara; disyorkan 64.
-4. Deploy. Guru mula-mula yang diaktifkan adalah admin; admin boleh buka akses guru lain dan agihkan kelas/subjek.
-5. Semak seting SSO/IC kerana **IC sahaja tidak selamat untuk portal sebenar mengandungi data murid**. Disyorkan tambah faktor kedua sebelum penggunaan luas.
+## 2. Tetapan Vercel Production
 
-## Polisi data
+Dalam Vercel → projek `pbd-uasa-sksa` → Settings → Environment Variables, isi **lima** tetapan berikut:
 
-Jadual `pbd_*` mengaktifkan RLS, `anon` dan `authenticated` tidak diberi akses terus, `service_role` sahaja. Backend API Next.js menggunakan secret key untuk operasi DB dengan semakan sesi dan peranan pada server. Token sesi HMAC dalam HttpOnly cookie. IC tidak disimpan oleh app; hanya di-hash SHA-256 base64url supaya padan dengan `teachers.identification_hash`. Login dihadkan percubaan, tetapi IC sahaja masih boleh diketahui pihak lain.
+| Nama | Penerangan |
+|---|---|
+| `SUPABASE_URL` | URL projek Koku sumber (lihat `.env.example`) |
+| `SUPABASE_SECRET_KEY` | Server key projek Koku (digunakan oleh kod baca sahaja) |
+| `PBD_SUPABASE_URL` | URL projek Supabase PBD baharu |
+| `PBD_SUPABASE_SECRET_KEY` | Server key projek PBD baharu |
+| `SESSION_SECRET` | Rentetan rawak minimum 32 aksara |
 
-## Penyelarasan mata pelajaran
+Jangan letak kunci rahsia dalam GitHub, chat, atau `NEXT_PUBLIC_`. Selepas simpan, **Redeploy** deployment terbaru.
 
-Katalog v1 mengandungi BM, BI, Matematik, Sains, Pendidikan Islam, Pendidikan Moral, PJPK, PSV, Muzik, Bahasa Arab, Sejarah, RBT, BCSK, BTSK, Bahasa Iban, Kadazandusun dan Semai. Subjek elektif/berdasarkan tawaran sebenar sekolah tidak sepatutnya diassign jika tidak ditawarkan. Mata pelajaran sekolah rendah boleh berubah dengan perubahan kurikulum; admin perlu menyemak katalog dengan pentadbiran sekolah dan arahan KPM terkini. UASA dibuka untuk Tahun 4–6 selepas guru memilih subjek; skema pemarkahan subjek khusus dan instrumen rasmi belum diimplementasi. PBD BI menggunakan lima domain asas Listening, Speaking, Reading, Writing, Language Arts sementara menunggu padanan penuh JSON IDMe asal.
+## 3. Uji sambungan
 
-### Gred UASA
-A 82–100; B 66–81; C 50–65; D 35–49; E 20–34; F 0–19 (aplikasi turut menyokong pecahan perpuluhan, dengan sempadan bawah julat seperti di atas).
+Buka `https://DOMAIN-PORTAL/api/health`. Jika `ok: true`, sambungan sumber Koku dan katalog PBD sudah boleh dibaca. Jika `ok: false`, semak nama variable dalam `missing` atau ralat yang diberikan. Endpoint ini tidak mendedahkan nilai secret.
 
-## Local
+Selepas health berjaya, uji login IC guru admin dan fungsi simpan menggunakan data ujian dahulu. Guru lain perlu diaktifkan oleh admin dan diagihkan kelas/subjek.
 
-`npm install` kemudian `npm run dev`. Semua secret hanya di pelayan. Uji dengan data tanpa murid sebenar pada persekitaran staging sebelum guna di sekolah.
+## 4. Had versi semasa
 
+PBD TP1–TP6 Tahun 1–6; UASA markah dan gred Tahun 4–6. Katalog subjek perlu disahkan dengan tawaran sebenar sekolah. Pemetaan penuh JSON Bahasa Inggeris dan penyegerakan IDMe menggunakan Chrome extension masih belum siap. Ini **bukan** integrasi terus ke sistem IDMe.
 
-## PENTING: PISAHKAN DATA KOKU DAN PBD (Oktober 2026)
-
-Kod terkini **tidak menulis PBD/UASA dalam pangkalan data Koku**. Projek asal **Perjumpaan Kokurikulum SKSA** dibaca bagi guru, murid, kelas, sesi dan enrolmen sahaja. Operasi tulis untuk jadual tersebut dihalang dalam backend.
-
-Sediakan **projek Supabase baharu khusus PBD-UASA SKSA**, lalu jalankan `migrations/001_pbd_separate_project.sql` **HANYA di projek baharu**. Skema itu menyimpan UUID rujukan kelas/murid/guru dari sumber Koku tanpa FK silang database.
-
-Vercel Production kini memerlukan 5 Environment Variables (lihat `.env.example`): `SUPABASE_URL`, `SUPABASE_SECRET_KEY` untuk baca sumber; `PBD_SUPABASE_URL`, `PBD_SUPABASE_SECRET_KEY` untuk simpanan PBD; dan `SESSION_SECRET`. Gunakan nilai server-only. Jika sumber dan destinasi URL sama, aplikasi sengaja tidak beroperasi bagi mengelakkan penulisan ke Koku. Jangan deploy untuk kegunaan sebenar sebelum konfigurasi diuji.
-
-Semak `/api/health` selepas redeploy. Endpoint memaklumkan pembolehubah yang tiada tanpa mendedahkan nilai key. Log masuk IC sahaja tidak cukup kuat untuk perlindungan rekod murid; pertimbangkan pengesahan tambahan sebelum penggunaan sebenar.
+Untuk pembangunan tempatan: `npm install` → `npm run dev`.

@@ -13,6 +13,14 @@ export async function makeReportPdf(data:ReportBundle):Promise<Uint8Array>{
  pdf.setTitle('SKSA - '+data.meta.title);
  pdf.setAuthor('Portal PBD & UASA SKSA');
  pdf.setSubject('Laporan pentaksiran - data sebenar portal');
+ let schoolLogo:Awaited<ReturnType<typeof pdf.embedPng>>|null=null;
+ try{
+  const logoResponse=await fetch('https://i.postimg.cc/3RF9M05N/Logo-SKSA.png',{cache:'force-cache',signal:AbortSignal.timeout(3500)});
+  if(logoResponse.ok){
+   const bytes=new Uint8Array(await logoResponse.arrayBuffer());
+   schoolLogo=await pdf.embedPng(bytes);
+  }
+ }catch{/* PDF kekal boleh dijana jika imej sekolah tidak dapat dicapai. */}
  const pages:ReturnType<typeof pdf.addPage>[]=[];
  const addPage=()=>{const p=pdf.addPage([WIDTH,HEIGHT]);pages.push(p);return p};
  const fit=(s:unknown,maxWidth:number,size=9,strong=false)=>{
@@ -27,6 +35,7 @@ export async function makeReportPdf(data:ReportBundle):Promise<Uint8Array>{
  };
  const base=(page:ReturnType<typeof pdf.addPage>,label:string)=>{
   page.drawRectangle({x:0,y:HEIGHT-68,width:WIDTH,height:68,color:NAVY});
+  if(schoolLogo)page.drawImage(schoolLogo,{x:WIDTH-92,y:HEIGHT-61,width:46,height:46});
   text(page,'SKSA  |  PORTAL PBD & UASA',38,HEIGHT-29,14,WHITE,true);
   text(page,label,38,HEIGHT-49,9,rgb(.78,.86,.97));
   page.drawLine({start:{x:38,y:41},end:{x:WIDTH-38,y:41},thickness:.6,color:BORDER});

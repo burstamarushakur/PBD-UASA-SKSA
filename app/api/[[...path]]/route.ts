@@ -33,13 +33,15 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{path?:strin
   const tp=body.tp===null||body.tp===''?null:Number(body.tp);const score=body.score===null||body.score===''?null:Number(body.score);
   if(type==='pbd'&&tp!==null&&(!Number.isInteger(tp)||tp<1||tp>6))return errorJSON('TP mesti 1 hingga 6');
   if(type==='uasa'&&score!==null&&(!Number.isFinite(score)||score<0||score>100))return errorJSON('Markah mesti 0–100');
-  // Kemahiran BI ikut IDMe: empat sahaja. TD bermaksud Tidak Ditaksir.
+  // IDMe PBD: BI 4 kemahiran, BM 3 kemahiran. TD = Tidak Ditaksir.
   const biSkills=['Listening','Speaking','Reading','Writing'];
+  const bmSkills=['Mendengar dan Bertutur','Membaca','Menulis'];
+  const requiredSkills=subject==='BI'?biSkills:subject==='BM'?bmSkills:[];
   const incoming=body.skills&&typeof body.skills==='object'&&!Array.isArray(body.skills)?body.skills:{};
   const skills:Record<string,number|'TD'>={};
   if(type==='pbd'){
    for(const [skill,value] of Object.entries(incoming as Record<string,unknown>)){
-    if(subject==='BI'&&!biSkills.includes(skill))continue;
+    if(requiredSkills.length&&!requiredSkills.includes(skill))continue;
     if(value===undefined||value===null||value==='')continue;
     if(value!=='TD'&&(!Number.isInteger(value)||Number(value)<1||Number(value)>6))return errorJSON('TP kemahiran mesti 1–6 atau TD');
     skills[skill]=value as number|'TD';
@@ -51,7 +53,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{path?:strin
   const intervention=type==='pbd'?String(body.intervention||'').trim().slice(0,1000):'';
   const remarksValid=['CEMERLANG','SEDERHANA','LEMAH'].includes(remarks);
   const effortValid=['SANGAT TINGGI','TINGGI','SEDERHANA','RENDAH'].includes(effort);
-  const skillsComplete=subject!=='BI'||biSkills.every(skill=>skills[skill]!==undefined);
+  const skillsComplete=requiredSkills.every(skill=>skills[skill]!==undefined);
   // Status ditentukan oleh sistem sahaja; nilai status daripada browser diabaikan.
   const status=type==='uasa'?(score!==null?'lengkap':'draf'):(tp!==null&&skillsComplete&&remarksValid&&effortValid?'lengkap':'draf');
   const data={academic_year:year,class_id:body.classId,student_id:body.studentId,subject_id:subject,assessment_type:type,term,tp:type==='pbd'?tp:null,score:type==='uasa'?score:null,grade:type==='uasa'&&score!==null?grade(score):null,skills:type==='pbd'?skills:{},remarks,intervention,effort,status,updated_by:teacher.id,updated_at:new Date().toISOString()};

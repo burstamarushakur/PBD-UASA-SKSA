@@ -9,7 +9,7 @@ const columns:Record<DataName,string[]>={
  academic_sessions:['id','year','name'],
  teachers:['id','full_name','active','identification_hash'],
  classes:['id','name','year_level','session_id'],
- students:['id','full_name','active'],
+ students:['id','full_name','active','idme_student_id'],
  student_enrolments:['id','student_id','session_id','class_id','is_current']
 };
 const number=(x:unknown)=>Array.isArray(x)?x.length:0;

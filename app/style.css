@@ -66,3 +66,13 @@
 @keyframes celebrateRise{from{opacity:0;transform:translateY(24px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:530px){.processSpinner{height:128px;width:128px}.processLogo{width:68px;height:68px}.processCard{padding:24px 18px}.celebrateCard h2{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.processRingOuter,.processRingInner,.processHalo,.processDots i,.celebrateHeart,.celebrateOverlay,.celebrateCard{animation-duration:.01ms!important;animation-iteration-count:1!important}.celebrateHeart{display:none}}
+
+/* Bahasa Melayu: tiga kemahiran PBD mengikut paparan IDMe (TP1–TP6 / TD). */
+.skillsList .skillRow.bmSkillRow{display:block;padding:13px 15px 15px}
+.skillsList .bmSkillRow>label{display:block;font-size:13px;font-weight:800;color:#243b58;margin-bottom:11px}
+.bmSkillOptions{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.bmRadio{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:6px 9px;border-radius:9px;border:1px solid #d5e0ed;background:#fff;color:#3f5270;font-size:12px;cursor:pointer;user-select:none;transition:background .13s,border-color .13s}
+.bmRadio input{accent-color:#235cac;margin:0;width:15px;height:15px;cursor:pointer}
+.bmRadio.checked{background:#e8f1ff;border-color:#7fa7e2;color:#1b4e98;font-weight:750}
+.bmRadio:hover,.bmRadio:focus-within{border-color:#3878ca}
+@media(max-width:530px){.skillsList .skillRow.bmSkillRow{padding:12px 10px}.bmSkillOptions{gap:5px}.bmRadio{padding:6px 8px}}

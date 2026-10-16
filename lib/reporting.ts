@@ -43,7 +43,8 @@ function summarize(rows:ReportStudent[]):ReportSummary{
 function toYear(x:string|null){const v=Number(x);if(!Number.isInteger(v)||v<2020||v>2100)throw Error('Tahun tidak sah');return v}
 export function reportParams(p:URLSearchParams){
  const year=toYear(p.get('year'));
- const type=p.get('type')==='uasa'?'uasa':p.get('type')==='pbd'?'pbd':null;
+ const requestedType=p.get('type');
+ const type:ReportType|null=requestedType==='uasa'?'uasa':requestedType==='pbd'?'pbd':null;
  const scope=p.get('scope');
  const term=type==='uasa'?'akhir':p.get('term');
  const subject=(p.get('subject')||'').trim();

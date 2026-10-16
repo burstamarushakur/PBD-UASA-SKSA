@@ -23,7 +23,7 @@ export default function Home(){
  const showError=(e:unknown)=>M(e instanceof Error?e.message:'Ralat tidak diketahui');
  useEffect(()=>{
  call('me').then(x=>T(x.teacher)).catch(()=>{});
- call('health').then(H).catch(e=>H({ok:false,message:e instanceof Error?e.message:'Ralat sambungan'}));
+ fetch('/api/health',{cache:'no-store'}).then(r=>r.json()).then(H).catch(e=>H({ok:false,message:e instanceof Error?e.message:'Ralat sambungan'}));
 },[]);
  useEffect(()=>{if(!teacher)return;O(null);K('');ST([]);call(`overview?year=${year}`).then(O).catch(showError)},[teacher,year]);
  useEffect(()=>{if(!klass||!subject||!teacher){ST([]);return}B(true);call(`students?year=${year}&classId=${klass}&subject=${encodeURIComponent(subject)}`).then(x=>{ST(x.students);R(x.records)}).catch(showError).finally(()=>B(false))},[teacher,year,klass,subject]);

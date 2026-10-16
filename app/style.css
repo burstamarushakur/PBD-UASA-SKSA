@@ -29,3 +29,40 @@
  .modal footer{padding:12px 16px}
  .modal footer button{padding:12px}
 }
+
+
+/* Animasi loading global PBD/UASA — dua arus pastel bersilang */
+.processOverlay,.celebrateOverlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,21,44,.60);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.processCard,.celebrateCard{position:relative;isolation:isolate;width:min(92vw,390px);overflow:hidden;border-radius:26px;background:linear-gradient(155deg,#fff,#f4f8ff 85%);border:1px solid rgba(255,255,255,.9);padding:28px 23px 25px;box-shadow:0 24px 85px rgba(6,23,54,.28);text-align:center}
+.processSpinner{width:152px;height:152px;margin:0 auto 19px;display:grid;place-items:center;position:relative}
+.processRing{position:absolute;border-radius:50%;inset:0}
+.processRingOuter{animation:processClockwise 2.8s linear infinite;background:conic-gradient(from 16deg,transparent 0 11%,#9ed7ff 13% 25%,#84b7ff 26% 31%,transparent 33% 55%,#ffc5a7 58% 69%,transparent 72% 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));filter:drop-shadow(0 0 8px #7fc2ff)}
+.processRingInner{inset:15px;animation:processAntiClockwise 2.15s linear infinite;background:conic-gradient(from 35deg,transparent 0 13%,#d1b4ff 16% 32%,transparent 35% 52%,#99f0d0 56% 75%,transparent 78% 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));filter:drop-shadow(0 0 8px #b68ce9)}
+.processHalo{position:absolute;width:94px;height:94px;border-radius:50%;background:radial-gradient(circle,rgba(222,239,255,.95),rgba(239,230,255,.44) 67%,transparent 80%);animation:processPulse 2.8s ease-in-out infinite}
+.processLogo{position:relative;z-index:2;width:77px;height:77px;object-fit:contain;filter:drop-shadow(0 5px 7px rgba(30,60,100,.16))}
+.processCard strong{display:block;color:#1c385f;font-size:17px;line-height:1.4}
+.processCard p{color:#72849a;font-size:12px;line-height:1.5;margin:9px 0 0}
+.processDots{display:flex;justify-content:center;gap:5px;margin-top:16px}
+.processDots i{width:6px;height:6px;border-radius:50%;background:#7faae4;animation:processPulse 1.1s ease-in-out infinite}
+.processDots i:nth-child(2){animation-delay:.18s}.processDots i:nth-child(3){animation-delay:.36s}
+@keyframes processClockwise{to{transform:rotate(360deg)}}
+@keyframes processAntiClockwise{to{transform:rotate(-360deg)}}
+@keyframes processPulse{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}
+.celebrateOverlay{z-index:10000;background:rgba(8,25,50,.53);animation:celebrateIn .25s ease-out both}
+.celebrateCard{width:min(93vw,460px);padding:37px 24px 29px;animation:celebrateRise .42s cubic-bezier(.2,.85,.25,1.15) both}
+.celebrateClose{position:absolute;z-index:5;right:11px;top:10px;font-size:27px;line-height:1;color:#7690a9;border:0;background:transparent;padding:4px 10px}
+.celebrateBadge{position:relative;width:108px;height:108px;display:grid;place-items:center;margin:0 auto 16px;border-radius:50%;background:linear-gradient(145deg,#e6fff3,#e8f1ff);box-shadow:inset 0 0 0 1px #d9eee9,0 6px 26px #3fc79525}
+.celebrateBadge img{width:75px;height:75px;object-fit:contain;position:relative;z-index:2}
+.celebrateCheck{position:absolute;right:-1px;bottom:4px;border-radius:50%;background:#27ad7a;color:white;border:3px solid white;width:32px;height:32px;display:grid;place-items:center;font-size:18px;font-weight:bold;z-index:3}
+.celebrateEyebrow{font-size:10px;letter-spacing:2px;font-weight:800;color:#17946e}
+.celebrateCard h2{font-size:17px;line-height:1.6;max-width:390px;margin:10px auto;color:#1f4164;position:relative;z-index:2}
+.celebrateCard p{font-size:12px;color:#6d8098;margin:10px 0 0;position:relative;z-index:2}
+.celebrateHearts{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.celebrateHeart{position:absolute;bottom:-32px;left:50%;font-size:18px;opacity:0;animation:heartFloat 2.6s ease-out infinite;color:#ffa1c5;--travel:-55px}
+.celebrateHeart1{color:#c9a7ff}.celebrateHeart2{color:#ffb28e}.celebrateHeart3{color:#88ddc0}
+.celebrateHeart:nth-child(1){left:7%;animation-delay:.1s;--travel:30px}.celebrateHeart:nth-child(2){left:16%;animation-delay:.7s;--travel:-18px}.celebrateHeart:nth-child(3){left:23%;animation-delay:1.1s;--travel:23px}.celebrateHeart:nth-child(4){left:33%;animation-delay:.3s;--travel:-28px}.celebrateHeart:nth-child(5){left:43%;animation-delay:1.2s;--travel:22px}.celebrateHeart:nth-child(6){left:52%;animation-delay:.5s;--travel:-30px}.celebrateHeart:nth-child(7){left:63%;animation-delay:1.4s;--travel:27px}.celebrateHeart:nth-child(8){left:73%;animation-delay:.15s;--travel:-35px}.celebrateHeart:nth-child(9){left:84%;animation-delay:.85s;--travel:17px}.celebrateHeart:nth-child(10){left:92%;animation-delay:.4s;--travel:-16px}.celebrateHeart:nth-child(11){left:5%;animation-delay:1.55s;--travel:22px}.celebrateHeart:nth-child(12){left:13%;animation-delay:1.3s;--travel:-12px}.celebrateHeart:nth-child(13){left:29%;animation-delay:1.7s;--travel:18px}.celebrateHeart:nth-child(14){left:38%;animation-delay:1.9s;--travel:-30px}.celebrateHeart:nth-child(15){left:48%;animation-delay:1.65s;--travel:27px}.celebrateHeart:nth-child(16){left:58%;animation-delay:1.95s;--travel:-17px}.celebrateHeart:nth-child(17){left:68%;animation-delay:1.75s;--travel:28px}.celebrateHeart:nth-child(18){left:78%;animation-delay:1.45s;--travel:-21px}.celebrateHeart:nth-child(19){left:88%;animation-delay:1.85s;--travel:24px}.celebrateHeart:nth-child(20){left:95%;animation-delay:1.6s;--travel:-15px}.celebrateHeart:nth-child(21){left:20%;animation-delay:2.1s;--travel:23px}.celebrateHeart:nth-child(22){left:80%;animation-delay:2.25s;--travel:-22px}
+@keyframes heartFloat{0%{opacity:0;transform:translate3d(0,0,0) scale(.55)}15%{opacity:.95}78%{opacity:.85}100%{opacity:0;transform:translate3d(var(--travel),-400px,0) rotate(35deg) scale(1.35)}}
+@keyframes celebrateIn{from{opacity:0}to{opacity:1}}
+@keyframes celebrateRise{from{opacity:0;transform:translateY(24px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:530px){.processSpinner{height:128px;width:128px}.processLogo{width:68px;height:68px}.processCard{padding:24px 18px}.celebrateCard h2{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.processRingOuter,.processRingInner,.processHalo,.processDots i,.celebrateHeart,.celebrateOverlay,.celebrateCard{animation-duration:.01ms!important;animation-iteration-count:1!important}.celebrateHeart{display:none}}

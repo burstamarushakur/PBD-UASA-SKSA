@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:pdf": "node --experimental-strip-types scripts/check-pdf.mjs"
   },
   "dependencies": {
     "next": "15.5.12",

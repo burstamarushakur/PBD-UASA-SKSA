@@ -1,0 +1,129 @@
+{
+  "schema": "sksa-idme-pbd-uasa/1.0",
+  "source": {
+    "pbd": "SPPB-PBD-20261016-092301-UTC.json",
+    "uasa": "SPPB-UASA-20261016-092353-UTC.json",
+    "inspector_version": "1.0.1",
+    "capture_date": "2026-10-16"
+  },
+  "pbd": {
+    "applies_to": {
+      "subject": "BI",
+      "years": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "source_columns": [
+      "Bil.",
+      "Nama Murid",
+      "No. Pengenalan",
+      "Jantina",
+      "Kemahiran",
+      "Tahap Penguasaan",
+      "Ulasan",
+      "Intervensi",
+      "Usaha Murid",
+      "Status"
+    ],
+    "inputs": [
+      {
+        "neon_field": "skills",
+        "idme_column": "Kemahiran",
+        "index": 4,
+        "type": "selection",
+        "options_captured": false,
+        "comment": "Menu choices redacted in inspector JSON; validate option labels before extension."
+      },
+      {
+        "neon_field": "tp",
+        "idme_column": "Tahap Penguasaan",
+        "index": 5,
+        "type": "radio",
+        "allowed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      {
+        "neon_field": "remarks",
+        "idme_column": "Ulasan",
+        "index": 6,
+        "type": "text"
+      },
+      {
+        "neon_field": "intervention",
+        "idme_column": "Intervensi",
+        "index": 7,
+        "type": "text"
+      },
+      {
+        "neon_field": "effort",
+        "idme_column": "Usaha Murid",
+        "index": 8,
+        "type": "selection_or_text",
+        "options_captured": false
+      },
+      {
+        "neon_field": "status",
+        "idme_column": "Status",
+        "index": 9,
+        "type": "selection",
+        "options_captured": false
+      }
+    ],
+    "sample_rendered_students": 32
+  },
+  "uasa": {
+    "applies_to": {
+      "all_subjects": true,
+      "years": [
+        4,
+        5,
+        6
+      ]
+    },
+    "source_columns": [
+      "Bil.",
+      "Nama Murid",
+      "No. Pengenalan",
+      "Jantina",
+      "[label disembunyikan]",
+      "Gred",
+      "Status"
+    ],
+    "inputs": [
+      {
+        "neon_field": "score",
+        "idme_column_index": 4,
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      {
+        "neon_field": "grade",
+        "idme_column": "Gred",
+        "index": 5,
+        "type": "display"
+      },
+      {
+        "neon_field": "status",
+        "idme_column": "Status",
+        "index": 6,
+        "type": "selection",
+        "options_captured": false
+      }
+    ],
+    "sample_rendered_students": 25
+  },
+  "extension_mapping_notes": "Exact IDMe menu choice texts were removed by inspector privacy mode. Do not invent statuses/skills selection values. Match IDMe student records by idme_student_id in Neon; obtain stable selectors from extension capture before writing into IDMe."
+}

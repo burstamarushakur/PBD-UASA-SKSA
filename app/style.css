@@ -76,3 +76,58 @@
 .bmRadio.checked{background:#e8f1ff;border-color:#7fa7e2;color:#1b4e98;font-weight:750}
 .bmRadio:hover,.bmRadio:focus-within{border-color:#3878ca}
 @media(max-width:530px){.skillsList .skillRow.bmSkillRow{padding:12px 10px}.bmSkillOptions{gap:5px}.bmRadio{padding:6px 8px}}
+
+
+/* Pengisian terus PBD/UASA: tiada modal, tiada dropdown TP, tiada scroll ke tepi. */
+.inlineAssessment{min-width:0}
+.inlineToolbar,.inlineBottomBar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 15px;background:#edf5ff;border:1px solid #d4e6ff;border-radius:13px}
+.inlineToolbar strong{display:block;color:#173e77;font-size:14px}
+.inlineToolbar small{display:block;color:#54708d;font-size:12px;line-height:1.5;margin-top:5px}
+.inlineSaveAll,.inlineSaveOne{border:0;background:#1c5ca6;color:#fff;border-radius:9px;padding:11px 17px;white-space:nowrap;font-weight:750;font-size:12px}
+.inlineSaveAll:hover:not(:disabled),.inlineSaveOne:hover:not(:disabled){background:#123f78}
+.inlineSaveAll:disabled,.inlineSaveOne:disabled{opacity:.55}
+.inlinePupilList{margin-top:17px;display:grid;gap:13px;min-width:0}
+.inlinePupil{background:#fff;border:1px solid #dfe7f1;border-radius:14px;overflow:hidden;min-width:0;box-shadow:0 3px 12px #20355408}
+.inlinePupilDirty{border-color:#82addf;box-shadow:0 0 0 1px #b5d7fa}
+.inlinePupilHead{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f5f8fd;padding:12px 15px;border-bottom:1px solid #ebf0f7}
+.inlinePupilIdentity{display:flex;align-items:center;gap:10px;min-width:0}
+.inlinePupilIdentity strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere;color:#253958}
+.inlinePupilNumber{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border-radius:8px;background:#dceaf9;color:#21518a;font-size:12px;font-weight:bold}
+.inlinePupilStatus{font-size:10px;border-radius:20px;color:#63758e;background:#e5eaf2;padding:6px 9px;white-space:nowrap}
+.inlinePupilStatus.editing{background:#fff0d4;color:#8b5c16}
+.inlinePupilStatus.completed{background:#d9f5e7;color:#177b51}
+.inlinePupilBody{padding:13px 15px;display:grid;gap:13px;min-width:0}
+.inlineQuick{background:#eef5ff;border:1px solid #d1e2fa;border-radius:11px;padding:11px 13px;display:flex;gap:14px;justify-content:space-between;align-items:center;min-width:0}
+.inlineQuickIntro{min-width:0}
+.inlineQuickIntro strong{display:block;font-size:12px;color:#1c4c88}
+.inlineQuickIntro small{display:block;font-size:11px;color:#5d7696;line-height:1.5;margin-top:3px}
+.inlineQuickButtons{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;width:245px;max-width:100%;flex-shrink:0}
+.inlineSkills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;min-width:0}
+.inlineSkill,.inlineOverall,.inlineDetail{min-width:0}
+.inlineSkill{border:1px solid #e1e9f4;border-radius:10px;padding:10px 11px;background:#fff}
+.inlineSkill>label,.inlineOverall>label,.inlineDetail>label,.inlineExam>label{display:block;font-size:12px;font-weight:750;color:#36516f;margin-bottom:8px}
+.inlineChoices{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
+.inlineNumber{display:grid;place-items:center;padding:0;height:34px;min-width:0;width:100%;border-radius:7px;border:1px solid #ccdae9;background:white;color:#365879;font-size:13px;font-weight:750;line-height:1;transition:background .1s,border-color .1s}
+.inlineNumber:hover:not(:disabled){background:#e7f1ff;border-color:#779ed3}
+.inlineNumber.selected{background:#1e5da8;color:white;border-color:#1e5da8;box-shadow:0 2px 8px #1e5da82a}
+.inlineOverall{padding:10px 12px;background:#f7fafc;border-radius:10px;border:1px solid #e5edf5}
+.inlineOverall .inlineChoices{grid-template-columns:repeat(6,minmax(0,44px));}
+.inlineDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;min-width:0}
+.inlinePills{display:flex;gap:5px;flex-wrap:wrap}
+.inlinePill{border:1px solid #d2dce8;background:#fff;border-radius:7px;font-size:10px;font-weight:750;color:#40546c;padding:9px 10px;min-height:34px}
+.inlinePill:hover:not(:disabled){border-color:#7a9cc7}
+.inlinePill.selected{background:#1e5da8;color:#fff;border-color:#1e5da8}
+.inlineIntervention{font-size:12px;color:#5a6f89}
+.inlineIntervention summary{cursor:pointer;display:table;font-weight:650;padding:4px}
+.inlineIntervention textarea{display:block;width:100%;max-width:660px;border:1px solid #cfdce9;border-radius:8px;padding:11px;margin-top:9px;resize:vertical;font-size:13px}
+.inlinePupilFooter{display:flex;gap:12px;align-items:center;justify-content:space-between;border-top:1px solid #ecf1f6;background:#fbfcff;padding:9px 15px}
+.inlinePupilFooter small{font-size:11px;color:#6d7d8e}
+.inlineBottomBar{margin-top:16px;position:sticky;bottom:10px;background:#e9f3ff;box-shadow:0 5px 20px #17395a1c;z-index:5}
+.inlineBottomBar span{font-size:12px;font-weight:650;color:#2e5986}
+.inlineExam{padding:18px 15px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.inlineExam label{margin:0}
+.inlineExam input{max-width:130px;width:100%;font-size:16px;font-weight:700;border:1px solid #c5d6e8;border-radius:9px;padding:10px}
+.inlineGrade{font-size:15px;font-weight:750;color:#1e5da8}
+@media(max-width:1080px){.inlineSkills,.inlineDetails{grid-template-columns:1fr}}
+@media(max-width:650px){.inlineQuick{display:block}.inlineQuickButtons{margin-top:10px;width:100%}.inlineToolbar{align-items:flex-start;flex-direction:column}.inlinePupilBody{padding:10px}.inlinePupilHead{padding:10px}.inlinePupilFooter{padding:10px}.inlineSkill{padding:10px 8px}.inlineChoices{gap:4px}.inlineNumber{height:36px}.inlineBottomBar{bottom:0;flex-wrap:wrap}.inlineBottomBar button{margin-left:auto}.inlineBottomBar span{font-size:11px}}
+@media(max-width:340px){.inlinePill{font-size:9px;padding:8px 7px}.inlineChoices{gap:3px}.inlineNumber{font-size:12px}}

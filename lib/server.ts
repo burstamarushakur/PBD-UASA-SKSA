@@ -1,9 +1,9 @@
 import { createHmac,createHash,timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
+import { neon } from '@neondatabase/serverless';
 const url=process.env.SUPABASE_URL?.replace(/\/$/,'');
 const key=process.env.SUPABASE_SECRET_KEY;
-const pbdUrl=process.env.PBD_SUPABASE_URL?.replace(/\/$/,'');
-const pbdKey=process.env.PBD_SUPABASE_SECRET_KEY;
+const neonUrl=process.env.PBD_DATABASE_URL;
 const secret=process.env.SESSION_SECRET;
 // Portal Kokurikulum: akses baca sahaja. Rekod baru hanya dalam jadual pbd_*.
 const legacyReadOnly=new Set(['teachers','students','academic_sessions','classes','student_enrolments']);
@@ -12,30 +12,76 @@ export function configuration(){
  const missing:string[]=[];
  if(!url)missing.push('SUPABASE_URL');
  if(!key||key.startsWith('YOUR_')||key.startsWith('ISI_'))missing.push('SUPABASE_SECRET_KEY');
- if(!pbdUrl||pbdUrl==='YOUR_PBD_SUPABASE_URL')missing.push('PBD_SUPABASE_URL');
- if(!pbdKey||pbdKey.startsWith('YOUR_')||pbdKey.startsWith('ISI_'))missing.push('PBD_SUPABASE_SECRET_KEY');
+ if(!neonUrl||!/^postgres(ql)?:\/\//.test(neonUrl))missing.push('PBD_DATABASE_URL');
  if(!secret||secret.length<32||secret.startsWith('YOUR_')||secret.startsWith('ISI_')||secret==='GENERATE_A_RANDOM_64_CHARACTER_SECRET')missing.push('SESSION_SECRET');
- if(url&&pbdUrl&&url===pbdUrl)missing.push('PBD_SUPABASE_URL mesti projek berlainan daripada Portal Koku');
+ 
  return {ready:missing.length===0,missing};
+}
+
+const tableColumns:Record<string,Set<string>>={
+ pbd_subjects:new Set(['id','name','short_name','min_year','max_year','skills','is_elective','active','sort_order']),
+ pbd_teacher_access:new Set(['teacher_id','role','enabled','created_at']),
+ pbd_assignments:new Set(['id','teacher_id','class_id','subject_id','academic_year','created_at']),
+ pbd_records:new Set(['id','academic_year','class_id','student_id','subject_id','assessment_type','term','tp','skills','remarks','intervention','effort','status','score','grade','updated_by','updated_at']),
+ pbd_login_attempts:new Set(['fingerprint','attempts','window_start','blocked_until'])
+};
+function neonStatement(table:string,method:string,params:string,payload:unknown){
+ const cols=tableColumns[table];
+ if(!cols)throw Error('Jadual Neon tidak dibenarkan');
+ const qs=new URLSearchParams(params), values:unknown[]=[];
+ const args:string[]=[];
+ const binds=(v:unknown)=>{values.push(v);return '$'+values.length};
+ const ident=(col:string)=>{if(!cols.has(col))throw Error('Kolum tidak sah: '+col);return '"'+col+'"'};
+ if(method==='GET'||method==='DELETE'){
+  const fields=method==='DELETE'?'*':(qs.get('select')||'*').split(',').map(x=>x.trim());
+  const projection=fields.length===1&&fields[0]==='*'?'*':fields.map(ident).join(', ');
+  for(const [key,raw] of qs.entries()){
+   if(['select','order','limit','offset'].includes(key))continue;
+   const dot=raw.indexOf('.');const op=raw.slice(0,dot),value=raw.slice(dot+1);
+   if(dot<0||!['eq','gte','lte','gt','lt','neq'].includes(op))throw Error('Penapis query tidak sah');
+   const sign:Record<string,string>={eq:'=',gte:'>=',lte:'<=',gt:'>',lt:'<',neq:'<>'};
+   args.push(ident(key)+' '+sign[op]+' '+bind(value));
+  }
+  const where=args.length?' WHERE '+args.join(' AND '):'';
+  if(method==='DELETE')return {sql:'DELETE FROM public."'+table+'"'+where+' RETURNING *',values};
+  let query='SELECT '+projection+' FROM public."'+table+'"'+where;
+  const order=qs.get('order');
+  if(order){const [field,direction]=order.split('.');query+=' ORDER BY '+ident(field)+' '+(direction==='desc'?'DESC':'ASC')}
+  const limit=qs.get('limit');if(limit!==null){const n=Number(limit);if(!Number.isInteger(n)||n<1||n>5000)throw Error('Had query tidak sah');query+=' LIMIT '+n}
+  return {sql:query,values};
+ }
+ if(method!=='POST'||!payload||typeof payload!=='object'||Array.isArray(payload))throw Error('Operasi database tidak disokong');
+ const data=payload as Record<string,unknown>,keys=Object.keys(data);
+ if(!keys.length)throw Error('Rekod kosong');
+ const fields=keys.map(ident);
+ const placeholders=keys.map(k=>bind(data[k]&&typeof data[k]==='object'?JSON.stringify(data[k]):data[k]));
+ let statement='INSERT INTO public."'+table+'" ('+fields.join(',')+') VALUES ('+placeholders.join(',')+')';
+ const conflict=qs.get('on_conflict');
+ if(conflict){
+  const conflictFields=conflict.split(',').map(x=>ident(x.trim()));
+  const updates=keys.filter(k=>!conflict.split(',').includes(k)).map(k=>ident(k)+'=EXCLUDED.'+ident(k));
+  statement+=' ON CONFLICT ('+conflictFields.join(',')+') DO '+(updates.length?'UPDATE SET '+updates.join(', '):'NOTHING');
+ }
+ return {sql:statement+' RETURNING *',values};
 }
 export async function db(table:string,method='GET',params='',payload?:unknown){
  const cfg=configuration();
- if(!cfg.ready)throw new Error('Tetapan Vercel belum lengkap: '+cfg.missing.join(', '));
- if(!legacyReadOnly.has(table)&&!pbdTables.has(table))throw new Error('Akses jadual tidak dibenarkan');
- if(legacyReadOnly.has(table)&&method!=='GET')throw new Error('Portal Koku hanya boleh dibaca, bukan diubah');
- // Supabase sb_secret_ bukan JWT. Jangan hantar sebagai Bearer.
- const isSource=legacyReadOnly.has(table);
- const base=isSource?url!:pbdUrl!,apiKey=isSource?key!:pbdKey!;
- const headers:Record<string,string>={'apikey':apiKey,'Content-Type':'application/json','Prefer':method==='POST'&&params.includes('on_conflict')?'resolution=merge-duplicates,return=representation':'return=representation'};
- if(!apiKey.startsWith('sb_secret_'))headers.Authorization=`Bearer ${apiKey}`;
- const res=await fetch(`${base}/rest/v1/${table}${params?`?${params}`:''}`,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:'no-store'});
- const bodyText=await res.text();
- if(!res.ok){
-  if(res.status===401||res.status===403)throw new Error('Sambungan Supabase ditolak ('+res.status+'). Semak kunci server '+(isSource?'SUPABASE_SECRET_KEY':'PBD_SUPABASE_SECRET_KEY')+' dalam Vercel.');
-  throw new Error('Ralat pangkalan data ('+res.status+'). Semak sambungan di Vercel.');
+ if(!cfg.ready)throw new Error('Tetapan pelayan belum lengkap: '+cfg.missing.join(', '));
+ if(legacyReadOnly.has(table)){
+  if(method!=='GET')throw Error('Jadual Portal Koku adalah baca sahaja');
+  const apiKey=key!;
+  const headers:Record<string,string>={'apikey':apiKey,'Content-Type':'application/json'};
+  if(!apiKey.startsWith('sb_secret_'))headers.Authorization='Bearer '+apiKey;
+  const res=await fetch(url+'/rest/v1/'+table+(params?'?'+params:''),{method:'GET',headers,cache:'no-store'});
+  if(!res.ok)throw Error('Bacaan Portal Koku gagal ('+res.status+'). Periksa konfigurasi dan kunci.');
+  return res.json();
  }
- try{return bodyText?JSON.parse(bodyText):[]}catch{throw new Error('Supabase tidak memulangkan data JSON yang sah')}
+ if(!pbdTables.has(table))throw Error('Jadual tidak dibenarkan');
+ const query=neonStatement(table,method,params,payload);
+ const sql=neon(neonUrl!);
+ return await sql.query(query.sql,query.values as any[]);
 }
+
 export const icHash=(ic:string)=>createHash('sha256').update(ic).digest('base64url');
 type Session={id:string; exp:number};
 function signature(x:string){if(!secret||secret.length<32)throw new Error('SESSION_SECRET perlu sekurang-kurangnya 32 aksara');return createHmac('sha256',secret).update(x).digest('base64url')}

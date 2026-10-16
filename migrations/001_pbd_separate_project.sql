@@ -45,13 +45,11 @@ CREATE TABLE IF NOT EXISTS public.pbd_login_attempts (
  fingerprint text PRIMARY KEY, attempts int NOT NULL DEFAULT 0,
  window_start timestamptz NOT NULL DEFAULT now(), blocked_until timestamptz
 );
-DO $$ DECLARE tbl text; BEGIN
- FOREACH tbl IN ARRAY ARRAY['pbd_subjects','pbd_teacher_access','pbd_assignments','pbd_records','pbd_login_attempts'] LOOP
-  EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',tbl);
-  EXECUTE format('REVOKE ALL ON TABLE public.%I FROM anon,authenticated',tbl);
-  EXECUTE format('GRANT ALL ON TABLE public.%I TO service_role',tbl);
- END LOOP;
-END $$;
+ALTER TABLE public.pbd_subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pbd_teacher_access ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pbd_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pbd_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pbd_login_attempts ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.pbd_subjects(id,name,short_name,min_year,max_year,skills,is_elective,sort_order) VALUES
 ('BM','Bahasa Melayu','BM',1,6,'["Mendengar dan Bertutur","Membaca","Menulis","Seni Bahasa","Tatabahasa"]',false,1),
 ('BI','Bahasa Inggeris','BI',1,6,'["Listening","Speaking","Reading","Writing","Language Arts"]',false,2),

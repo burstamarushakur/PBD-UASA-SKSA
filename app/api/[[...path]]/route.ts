@@ -1,5 +1,5 @@
 import { NextRequest,NextResponse } from 'next/server';
-import { db,icHash,newToken,getTeacher,assigned,errorJSON,grade,configuration } from '../../../lib/server';
+import { db,icHash,newToken,newExtensionCode,getTeacher,getExtensionTeacher,assigned,errorJSON,grade,configuration } from '../../../lib/server';
 const digits=(v:unknown)=>String(v||'').replace(/\D/g,'');
 function safeYear(y:unknown){const v=Number(y);if(!Number.isInteger(v)||v<2020||v>2100)throw new Error('Tahun tidak sah');return v}
 const uuid=(x:unknown)=>typeof x==='string'&&/^[a-f0-9-]{36}$/i.test(x);
@@ -60,6 +60,15 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{path?:strin
   const rows=await db('pbd_records','POST','on_conflict=academic_year,class_id,student_id,subject_id,assessment_type,term',data);return Response.json({ok:true,record:rows[0]});
  }
  if(teacher.role!=='admin')return errorJSON('Admin sahaja',403);
+ if(action==='extension-code'){
+  if(!uuid(body.teacherId))return errorJSON('Guru tidak sah');
+  const [teachers,access]=await Promise.all([
+   db('teachers','GET',`select=id,active&id=eq.${body.teacherId}&limit=1`),
+   db('pbd_teacher_access','GET',`select=enabled&teacher_id=eq.${body.teacherId}&limit=1`)
+  ]);
+  if(!teachers[0]?.active||!access[0]?.enabled)return errorJSON('Guru belum diaktifkan untuk PBD/UASA',403);
+  return Response.json({ok:true,...newExtensionCode(body.teacherId)});
+ }
  if(action==='access'){
   if(!uuid(body.teacherId))return errorJSON('Guru tidak sah');
   const role=body.role==='admin'?'admin':'guru';if(body.teacherId===teacher.id&&(!body.enabled||role!=='admin'))return errorJSON('Admin tidak boleh nyahaktif diri');
@@ -88,27 +97,34 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string
    return Response.json({ok:false,missing:[],message:e instanceof Error?e.message:'Ralat sambungan Supabase'},{status:503});
   }
  }
- const t=await getTeacher();if(!t)return errorJSON('Sila log masuk',401);
+ const extensionRead=action==='extension-overview'||action==='extension-students';
+ const t=extensionRead?await getExtensionTeacher(req.headers.get('authorization')):await getTeacher();
+ if(!t)return errorJSON(extensionRead?'Kod extension tidak sah / tamat tempoh. Minta kod baharu daripada admin.':'Sila log masuk',401);
  try{
   if(action==='me')return Response.json({teacher:t});
   const year=safeYear(req.nextUrl.searchParams.get('year')||'2026');
   const sessions=await db('academic_sessions','GET',`select=id,year&year=eq.${year}&limit=1`);const sid=sessions[0]?.id;
-  if(action==='overview'){
+  if(action==='overview'||action==='extension-overview'){
    const [subjects,allClasses,assignments]=await Promise.all([db('pbd_subjects','GET','select=*&active=eq.true&order=sort_order.asc'),sid?db('classes','GET',`select=id,name,year_level&session_id=eq.${sid}&year_level=gte.1&year_level=lte.6&order=year_level.asc,name.asc`):[],db('pbd_assignments','GET',`select=teacher_id,class_id,subject_id,academic_year&academic_year=eq.${year}${t.role==='admin'?'':`&teacher_id=eq.${t.id}`}`)]);
    const classes=t.role==='admin'?allClasses:allClasses.filter((c:any)=>assignments.some((a:any)=>a.class_id===c.id));
-   const teachers=t.role==='admin'?await db('teachers','GET','select=id,full_name,active&active=eq.true&order=full_name.asc'):[];
-   const access=t.role==='admin'?await db('pbd_teacher_access','GET','select=teacher_id,role,enabled'):[];
+   const teachers=t.role==='admin'&&!extensionRead?await db('teachers','GET','select=id,full_name,active&active=eq.true&order=full_name.asc'):[];
+   const access=t.role==='admin'&&!extensionRead?await db('pbd_teacher_access','GET','select=teacher_id,role,enabled'):[];
    return Response.json({teacher:t,classes,subjects,assignments,teachers,access,year});
   }
-  if(action==='students'){
+  if(action==='students'||action==='extension-students'){
    const cid=req.nextUrl.searchParams.get('classId')||'',subject=req.nextUrl.searchParams.get('subject')||'';if(!uuid(cid)||!subject)return errorJSON('Kelas/subjek diperlukan');
    if(!await assigned(t,year,cid,subject))return errorJSON('Tidak dibenarkan',403);
    const c=await db('classes','GET',`select=id,session_id,year_level&id=eq.${cid}&limit=1`);if(!c.length||c[0].session_id!==sid)return errorJSON('Kelas tidak wujud');
    const sub=await db('pbd_subjects','GET',`select=id,min_year,max_year&id=eq.${encodeURIComponent(subject)}&limit=1`);if(!sub.length||c[0].year_level<sub[0].min_year||c[0].year_level>sub[0].max_year)return errorJSON('Subjek tidak berkaitan');
-   const [enroll,records]=await Promise.all([db('student_enrolments','GET',`select=student_id&class_id=eq.${cid}&session_id=eq.${sid}&is_current=eq.true`),db('pbd_records','GET',`select=*&class_id=eq.${cid}&subject_id=eq.${encodeURIComponent(subject)}&academic_year=eq.${year}`)]);
+   const assessmentType=extensionRead?req.nextUrl.searchParams.get('type'):null;
+   const term=extensionRead?req.nextUrl.searchParams.get('term'):null;
+   if(extensionRead&&(!['pbd','uasa'].includes(assessmentType||'')||!['pertengahan','akhir'].includes(term||'')))return errorJSON('Jenis pentaksiran tidak sah');
+   const recordFilter=extensionRead?`&assessment_type=eq.${assessmentType}&term=eq.${term}`:'';
+   const [enroll,records]=await Promise.all([db('student_enrolments','GET',`select=student_id&class_id=eq.${cid}&session_id=eq.${sid}&is_current=eq.true`),db('pbd_records','GET',`select=*&class_id=eq.${cid}&subject_id=eq.${encodeURIComponent(subject)}&academic_year=eq.${year}${recordFilter}`)]);
    const ids=enroll.map((e:any)=>e.student_id).filter((x:any)=>uuid(x));
    const pupils=ids.length?await db('students','GET',`select=id,full_name&id=in.(${ids.join(',')})`):[];
-   return Response.json({students:pupils.sort((a:any,b:any)=>a.full_name.localeCompare(b.full_name)),records});
+   const safeRecords=extensionRead?records.map((r:any)=>({student_id:r.student_id,academic_year:r.academic_year,class_id:r.class_id,subject_id:r.subject_id,assessment_type:r.assessment_type,term:r.term,tp:r.tp,score:r.score,skills:r.skills,remarks:r.remarks,intervention:r.intervention,effort:r.effort,status:r.status,updated_at:r.updated_at})):records;
+   return Response.json({students:pupils.sort((a:any,b:any)=>a.full_name.localeCompare(b.full_name)),records:safeRecords});
   }
   return errorJSON('Endpoint tidak wujud',404);
  }catch(e){console.error(e);return errorJSON(e instanceof Error?e.message:'Ralat dalaman',500)}

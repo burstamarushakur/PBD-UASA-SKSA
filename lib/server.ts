@@ -87,7 +87,38 @@ export const icHash=(ic:string)=>createHash('sha256').update(ic).digest('base64u
 type Session={id:string; exp:number};
 function signature(x:string){if(!secret||secret.length<32)throw new Error('SESSION_SECRET perlu sekurang-kurangnya 32 aksara');return createHmac('sha256',secret).update(x).digest('base64url')}
 export function newToken(id:string){const body=Buffer.from(JSON.stringify({id,exp:Date.now()+8*3600_000})).toString('base64url');return `${body}.${signature(body)}`}
-export async function getTeacher(){const token=(await cookies()).get('sksa_pbd_session')?.value;if(!token)return null;try{const [body,sig]=token.split('.');if(!body||!sig)return null;const actual=signature(body),a=Buffer.from(actual),b=Buffer.from(sig);if(a.length!==b.length||!timingSafeEqual(a,b))return null;const p=JSON.parse(Buffer.from(body,'base64url').toString()) as Session;if(Date.now()>p.exp)return null;const teacher=await db('teachers','GET',`select=id,full_name,active&id=eq.${encodeURIComponent(p.id)}&limit=1`);if(!teacher[0]?.active)return null;const access=await db('pbd_teacher_access','GET',`select=role,enabled&teacher_id=eq.${encodeURIComponent(p.id)}&limit=1`);if(!access[0]?.enabled)return null;return {id:String(teacher[0].id),full_name:String(teacher[0].full_name),active:teacher[0].active===true,role:access[0].role as 'admin'|'guru'};}catch{return null}}
+async function teacherById(id:string){
+ const teacher=await db('teachers','GET',`select=id,full_name,active&id=eq.${encodeURIComponent(id)}&limit=1`);
+ if(!teacher[0]?.active)return null;
+ const access=await db('pbd_teacher_access','GET',`select=role,enabled&teacher_id=eq.${encodeURIComponent(id)}&limit=1`);
+ if(!access[0]?.enabled)return null;
+ return {id:String(teacher[0].id),full_name:String(teacher[0].full_name),active:true,role:access[0].role as 'admin'|'guru'};
+}
+export async function getTeacher(){const token=(await cookies()).get('sksa_pbd_session')?.value;if(!token)return null;try{const [body,sig]=token.split('.');if(!body||!sig)return null;const actual=signature(body),a=Buffer.from(actual),b=Buffer.from(sig);if(a.length!==b.length||!timingSafeEqual(a,b))return null;const p=JSON.parse(Buffer.from(body,'base64url').toString()) as Session;if(Date.now()>p.exp||!/^[a-f0-9-]{36}$/i.test(p.id))return null;return await teacherById(p.id);}catch{return null}}
+
+// Read-only, teacher-scoped extension credential. Issued by an admin already
+// authenticated on the portal, never embedded in the downloadable extension.
+// Deactivating the teacher in pbd_teacher_access immediately invalidates it.
+const EXTENSION_DAYS=90;
+export function newExtensionCode(id:string){
+ if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('ID guru tidak sah');
+ const expiresAt=Date.now()+EXTENSION_DAYS*24*3600_000;
+ const body=Buffer.from(JSON.stringify({kind:'sksa-pbd-extension-v1',id,exp:expiresAt})).toString('base64url');
+ return {code:`${body}.${signature('extension-v1|'+body)}`,expiresAt:new Date(expiresAt).toISOString()};
+}
+export async function getExtensionTeacher(authorization:string|null){
+ const match=/^Bearer ([A-Za-z0-9_-]{20,2048})\.([A-Za-z0-9_-]{20,2048})$/.exec(authorization||'');
+ if(!match)return null;
+ try{
+  const [,body,sig]=match,actual=signature('extension-v1|'+body);
+  const a=Buffer.from(actual),b=Buffer.from(sig);
+  if(a.length!==b.length||!timingSafeEqual(a,b))return null;
+  const payload=JSON.parse(Buffer.from(body,'base64url').toString()) as {kind:string;id:string;exp:number};
+  if(payload.kind!=='sksa-pbd-extension-v1'||!/^[a-f0-9-]{36}$/i.test(payload.id)||
+     !Number.isFinite(payload.exp)||payload.exp<=Date.now()||payload.exp>Date.now()+EXTENSION_DAYS*24*3600_000)return null;
+  return await teacherById(payload.id);
+ }catch{return null}
+}
 export async function assigned(t:{id:string,role:string},year:number,classId:string,subjectId:string){if(t.role==='admin')return true;const rows=await db('pbd_assignments','GET',`select=id&teacher_id=eq.${t.id}&class_id=eq.${classId}&subject_id=eq.${encodeURIComponent(subjectId)}&academic_year=eq.${year}&limit=1`);return rows.length>0}
 export const errorJSON=(msg:string,status=400)=>Response.json({error:msg},{status});
 export const grade=(v:number)=>v>=82?'A':v>=66?'B':v>=50?'C':v>=35?'D':v>=20?'E':'F';

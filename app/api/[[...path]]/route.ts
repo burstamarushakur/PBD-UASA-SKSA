@@ -1,5 +1,5 @@
 import { NextRequest,NextResponse } from 'next/server';
-import { db,icHash,newToken,newExtensionCode,getTeacher,getExtensionTeacher,assigned,errorJSON,grade,configuration } from '../../../lib/server';
+import { db,icHash,newToken,newExtensionCode,getTeacher,getExtensionTeacher,getIcExtensionTeacher,assigned,errorJSON,grade,configuration } from '../../../lib/server';
 const digits=(v:unknown)=>String(v||'').replace(/\D/g,'');
 function safeYear(y:unknown){const v=Number(y);if(!Number.isInteger(v)||v<2020||v>2100)throw new Error('Tahun tidak sah');return v}
 const uuid=(x:unknown)=>typeof x==='string'&&/^[a-f0-9-]{36}$/i.test(x);
@@ -98,7 +98,7 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{path?:string
   }
  }
  const extensionRead=action==='extension-overview'||action==='extension-students';
- const t=extensionRead?await getExtensionTeacher(req.headers.get('authorization')):await getTeacher();
+ const t=extensionRead?(await getIcExtensionTeacher(req.headers.get('authorization'))||await getExtensionTeacher(req.headers.get('authorization'))):await getTeacher();
  if(!t)return errorJSON(extensionRead?'Kod extension tidak sah / tamat tempoh. Minta kod baharu daripada admin.':'Sila log masuk',401);
  try{
   if(action==='me')return Response.json({teacher:t});

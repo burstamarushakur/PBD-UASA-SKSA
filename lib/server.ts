@@ -122,3 +122,25 @@ export async function getExtensionTeacher(authorization:string|null){
 export async function assigned(t:{id:string,role:string},year:number,classId:string,subjectId:string){if(t.role==='admin')return true;const rows=await db('pbd_assignments','GET',`select=id&teacher_id=eq.${t.id}&class_id=eq.${classId}&subject_id=eq.${encodeURIComponent(subjectId)}&academic_year=eq.${year}&limit=1`);return rows.length>0}
 export const errorJSON=(msg:string,status=400)=>Response.json({error:msg},{status});
 export const grade=(v:number)=>v>=82?'A':v>=66?'B':v>=50?'C':v>=35?'D':v>=20?'E':'F';
+
+// v1.0.12: IC-only extension sessions, without activation code or webapp cookies.
+const IC_EXTENSION_DAYS=7;
+export function newIcExtensionSession(id:string){
+ if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('ID guru tidak sah');
+ const exp=Date.now()+IC_EXTENSION_DAYS*24*3600_000;
+ const body=Buffer.from(JSON.stringify({kind:'sksa-pbd-ic-session-v1',id,exp})).toString('base64url');
+ return {session:body+'.'+signature('extension-ic-v1|'+body),expiresAt:new Date(exp).toISOString()};
+}
+export async function getIcExtensionTeacher(authorization:string|null){
+ const match=/^Bearer ([A-Za-z0-9_-]{20,2048})\.([A-Za-z0-9_-]{20,2048})$/.exec(authorization||'');
+ if(!match)return null;
+ try{
+  const [,body,sig]=match,actual=signature('extension-ic-v1|'+body);
+  const a=Buffer.from(actual),b=Buffer.from(sig);
+  if(a.length!==b.length||!timingSafeEqual(a,b))return null;
+  const p=JSON.parse(Buffer.from(body,'base64url').toString()) as {kind:string;id:string;exp:number};
+  if(p.kind!=='sksa-pbd-ic-session-v1'||!/^[a-f0-9-]{36}$/i.test(p.id)||
+     !Number.isFinite(p.exp)||p.exp<=Date.now()||p.exp>Date.now()+IC_EXTENSION_DAYS*24*3600_000)return null;
+  return await teacherById(p.id);
+ }catch{return null}
+}
